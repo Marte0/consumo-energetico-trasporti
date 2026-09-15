@@ -1,0 +1,35 @@
+@font-face { font-family: "Satoshi"; src: url("assets/font/Satoshi-Medium.woff") format("woff"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Satoshi"; src: url("assets/font/Satoshi-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cubano"; src: url("assets/font/Cubano.woff") format("woff"); font-weight: normal; font-style: normal; font-display: swap; }
+body, html { height: 100%; margin: 0; padding: 0; }
+body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-serif; margin: 0; padding: 0; }
+.svg-definitions { position: absolute; }
+#container { min-height: 100vh; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box; }
+#donut-chart { margin: 40px 0 20px 0; }
+#donut-chart svg { display: block; overflow: visible; }
+#year-slider-container { width: 500px; margin: 20px 0 10px 0; display: flex; flex-direction: column; align-items: center; }
+#year-slider { width: 100%; accent-color: #804600; }
+#year-label { margin-top: 5px; font-size: 1.2em; color: #1d1d1b; }
+#energy-icons { display: flex; flex-direction: row; justify-content: center; gap: 30px; margin-top: 30px; margin-bottom: 30px; }
+.energy-icon { display: flex; flex-direction: column; align-items: center; position: relative; transition: all 0.2s ease-in-out; border: 0; background: transparent; padding: 0; font: inherit; cursor: pointer; }
+.image-placeholder { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 34px 8px 8px; text-align: center; color: var(--placeholder-ink); background: var(--placeholder-color); font-family: "Satoshi", Arial, sans-serif; font-size: 6px; font-weight: 700; line-height: 1.15; text-transform: uppercase; }
+.energy-percentage { position: absolute; top: 10%; background: none; color: #8a5a13; font-family: "Cubano", "Satoshi", Arial, sans-serif; font-size: var(--energy-percentage-size, 2em); font-weight: bold; border: none; padding: 0; line-height: 1; z-index: 2; }
+.energy-percentage .percent-symbol { font-size: 0.5em; }
+.energy-label { margin-top: 10px; color: #8a5a13; font-weight: bold; font-size: 0.9em; text-align: center; font-family: "Cubano", "Satoshi", Arial, sans-serif; max-width: 130px; line-height: 1.05; }
+.energy-value { margin-top: 5px; color: #1d1d1b; font-size: 0.68em; font-weight: 700; }
+.donut-kw-value { font-family: "Satoshi", Arial, sans-serif; font-weight: 700; }
+.donut-kw-label { font-family: "Satoshi", Arial, sans-serif; font-weight: 500; }
+.cubano-font { font-family: "Cubano", Arial, sans-serif; font-weight: normal; }
+.donut-slice { cursor: pointer; }
+@media (max-width: 900px), (max-height: 760px) {
+  #container { height: auto; min-height: 100vh; justify-content: flex-start; padding: 24px 18px; }
+  #donut-chart { margin: 10px 0 0; }
+  #donut-chart svg { width: min(450px, 88vw); height: auto; }
+  #year-slider-container { width: min(500px, 86vw); margin-top: 8px; }
+  #energy-icons { flex-wrap: wrap; gap: 24px; max-width: 650px; }
+}
+@media (max-width: 520px) {
+  #container { padding-top: 10px; }
+  #energy-icons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 12px; }
+  .energy-label { font-size: 0.72em; max-width: 100px; }
+}
