@@ -1,96 +1,175 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pause, Play, Sparkles } from 'lucide-react';
+import { Pause, Play, Route, Sparkles } from 'lucide-react';
+import { Cell, Pie, PieChart, Tooltip } from 'recharts';
+import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 
 type EnergyRow = { year: number; values: number[] };
 
 const SOURCES = [
-  { label: 'Altre rinnovabili', short: 'ALTRO', color: '#d9a7ef', ink: '#5c2068' },
-  { label: 'Biocarburanti', short: 'BIO', color: '#1f765c', ink: '#ffffff' },
-  { label: 'Solare', short: 'SOLARE', color: '#ffd42f', ink: '#6f4200' },
-  { label: 'Eolica', short: 'EOLICA', color: '#aab7ff', ink: '#18227f' },
-  { label: 'Idroelettrica', short: 'IDRICA', color: '#8fd9e7', ink: '#064f67' },
-  { label: 'Nucleare', short: 'NUCLEARE', color: '#b9d64a', ink: '#235b38' },
-  { label: 'Gas', short: 'GAS', color: '#f5abc9', ink: '#7b1644' },
-  { label: 'Carbone', short: 'CARBONE', color: '#83501c', ink: '#fff0d5' },
-  { label: 'Petrolio', short: 'PETROLIO', color: '#ff8e3a', ink: '#732800' },
+  { label: 'Benzina', short: 'BENZINA', color: '#ff9233', ink: '#6d2d00', image: 'Pompa di benzina' },
+  { label: 'Diesel', short: 'DIESEL', color: '#804600', ink: '#ffd12e', image: 'Tanica di diesel' },
+  { label: 'Carburanti per l’aviazione', short: 'AVIAZIONE', color: '#acb5f8', ink: '#142182', image: 'Aereo in volo' },
+  { label: 'Elettricità · traffico privato', short: 'ELETTRICO AUTO', color: '#ffd12e', ink: '#6d4300', image: 'Auto elettrica' },
+  { label: 'Elettricità · altri trasporti', short: 'ELETTRICO PUBBLICO', color: '#95d9e5', ink: '#005573', image: 'Treno elettrico' },
+  { label: 'Gas e altre fonti', short: 'GAS + ALTRO', color: '#e5b2ff', ink: '#631f66', image: 'Serbatoio di gas' },
 ] as const;
+
+const chartConfig = Object.fromEntries(SOURCES.map((source, index) => [String(index), { label: source.label, color: source.color }])) as ChartConfig;
+const formatTJ = (value: number) => new Intl.NumberFormat('it-CH', { maximumFractionDigits: 0 }).format(value);
 
 function parseRows(text: string): EnergyRow[] {
   return text.trim().split(/\r?\n/).slice(1).map((line) => {
     const cells = line.split(',');
-    return { year: Number(cells[2]), values: cells.slice(3, 12).map((value) => Number(value) || 0) };
+    return { year: Number(cells[0]), values: cells.slice(1, 7).map((value) => Number(value) || 0) };
   }).filter((row) => Number.isFinite(row.year));
 }
 
-function polar(cx: number, cy: number, radius: number, angle: number) {
-  const a = ((angle - 90) * Math.PI) / 180;
-  return { x: cx + radius * Math.cos(a), y: cy + radius * Math.sin(a) };
-}
+type SharedProps = {
+  rows: EnergyRow[];
+  index: number;
+  setIndex: (index: number) => void;
+  playing: boolean;
+  setPlaying: (playing: boolean) => void;
+};
 
-function donutPath(cx: number, cy: number, outer: number, inner: number, start: number, end: number) {
-  const a = polar(cx, cy, outer, end); const b = polar(cx, cy, outer, start);
-  const c = polar(cx, cy, inner, start); const d = polar(cx, cy, inner, end);
-  const large = end - start > 180 ? 1 : 0;
-  return `M ${a.x} ${a.y} A ${outer} ${outer} 0 ${large} 0 ${b.x} ${b.y} L ${c.x} ${c.y} A ${inner} ${inner} 0 ${large} 1 ${d.x} ${d.y} Z`;
-}
+function KitVersion({ rows, index, setIndex, playing, setPlaying }: SharedProps) {
+  const row = rows[index];
+  const [active, setActive] = useState<number | null>(null);
+  const total = row.values.reduce((sum, value) => sum + value, 0);
+  const chartData = row.values.map((value, sourceIndex) => ({ value, sourceIndex, percent: total ? (value / total) * 100 : 0 })).filter((item) => item.percent >= 1);
 
-function KitDonut({ row, active, onActive }: { row: EnergyRow; active: number | null; onActive: (value: number | null) => void }) {
-  const total = row.values.reduce((a, b) => a + b, 0); let angle = 0;
-  const arcs = row.values.map((value, index) => { const start = angle; angle += total ? (value / total) * 360 : 0; return { start, end: angle, value, index }; });
   return (
-    <svg className="kit-donut" viewBox="0 0 520 520" role="img" aria-label={`Mix energetico svizzero nel ${row.year}, totale ${total.toFixed(1)} terawattora`}>
-      <defs><filter id="hard-shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="-5" dy="6" stdDeviation="0" floodColor="#2b1609" floodOpacity=".9" /></filter></defs>
-      <g filter="url(#hard-shadow)">{arcs.filter((arc) => arc.value > 0).map((arc) => (
-        <path key={arc.index} d={donutPath(260, 260, active === arc.index ? 218 : 203, 105, arc.start + 1.3, arc.end - 1.3)} fill={SOURCES[arc.index].color} opacity={active === null || active === arc.index ? 1 : 0.25} className="donut-slice" onPointerEnter={() => onActive(arc.index)} onPointerLeave={() => onActive(null)} />
-      ))}</g>
-      <text x="260" y="245" textAnchor="middle" className="donut-total">{Math.round(total)}</text>
-      <text x="260" y="286" textAnchor="middle" className="donut-unit">TWh</text>
-    </svg>
+    <section className="kit-view" aria-labelledby="kit-title">
+      <header className="kit-heading">
+        <p>CONSUMO ENERGETICO DEI TRASPORTI</p>
+        <h1 id="kit-title">SECONDO IL VETTORE ENERGETICO</h1>
+      </header>
+
+      <div className="kit-chart-area">
+        <ChartContainer config={chartConfig} className="donut-container" initialDimension={{ width: 470, height: 470 }}>
+          <PieChart accessibilityLayer>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="sourceIndex"
+              cx="50%"
+              cy="50%"
+              innerRadius="42%"
+              outerRadius="78%"
+              cornerRadius={11}
+              paddingAngle={2.2}
+              stroke="none"
+              animationDuration={520}
+              animationEasing="ease-out"
+              onMouseEnter={(_, chartIndex) => setActive(chartData[chartIndex].sourceIndex)}
+              onMouseLeave={() => setActive(null)}
+            >
+              {chartData.map((item) => <Cell key={item.sourceIndex} fill={SOURCES[item.sourceIndex].color} opacity={active === null || active === item.sourceIndex ? 1 : 0.24} className="kit-sector" />)}
+            </Pie>
+            <Tooltip cursor={false} content={({ active: isOpen, payload }) => {
+              if (!isOpen || !payload?.[0]) return null;
+              const item = payload[0].payload as { value: number; sourceIndex: number; percent: number };
+              return <div className="kit-tooltip"><b>{SOURCES[item.sourceIndex].label}</b><span>{formatTJ(item.value)} TJ · {item.percent.toFixed(1)}%</span></div>;
+            }} />
+          </PieChart>
+        </ChartContainer>
+        <div className="donut-center" aria-live="polite"><strong>{formatTJ(total)}</strong><span>TJ</span></div>
+      </div>
+
+      <div className="kit-timeline">
+        <button onClick={() => setPlaying(!playing)} aria-label={playing ? 'Metti in pausa' : 'Riproduci gli anni'}>{playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}</button>
+        <label><input aria-label="Anno" type="range" min="0" max={rows.length - 1} value={index} onChange={(event) => setIndex(Number(event.target.value))} /><strong>{row.year}</strong></label>
+      </div>
+
+      <div className="kit-sources">
+        {SOURCES.map((source, sourceIndex) => {
+          const value = row.values[sourceIndex]; const percent = total ? (value / total) * 100 : 0;
+          return <button key={source.label} className={active === sourceIndex ? 'is-active' : ''} onPointerEnter={() => setActive(sourceIndex)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(sourceIndex)} onBlur={() => setActive(null)} style={{ '--source': source.color, '--source-ink': source.ink } as React.CSSProperties}>
+            <span className="kit-percent">{percent < 1 && value > 0 ? '<1' : Math.round(percent)}<small>%</small></span>
+            <span className="image-placeholder">IMMAGINE:<br />{source.image}</span>
+            <b>{source.short}</b><small>{formatTJ(value)} TJ</small>
+          </button>;
+        })}
+      </div>
+    </section>
   );
 }
 
-function Trend({ rows, index }: { rows: EnergyRow[]; index: number }) {
-  if (rows.length < 2) return null;
-  const values = rows.map((row) => row.values[index]); const max = Math.max(...values, 1);
-  const points = values.map((value, i) => `${(i / (values.length - 1)) * 100},${38 - (value / max) * 32}`).join(' ');
-  return <svg className="mini-trend" viewBox="0 0 100 42" preserveAspectRatio="none" aria-hidden="true"><polyline points={points} fill="none" stroke="currentColor" strokeWidth="2.2" vectorEffect="non-scaling-stroke" /></svg>;
+function smoothPath(points: { x: number; y: number }[]) {
+  if (!points.length) return '';
+  return points.slice(1).reduce((path, point, index) => {
+    const previous = points[index]; const midpoint = (previous.x + point.x) / 2;
+    return `${path} C ${midpoint} ${previous.y}, ${midpoint} ${point.y}, ${point.x} ${point.y}`;
+  }, `M ${points[0].x} ${points[0].y}`);
 }
 
-type ViewProps = { rows: EnergyRow[]; index: number; setIndex: (index: number) => void; playing: boolean; setPlaying: (playing: boolean) => void };
-
-function KitProposal({ rows, index, setIndex, playing, setPlaying }: ViewProps) {
-  const [active, setActive] = useState<number | null>(null); const row = rows[index];
-  const total = row.values.reduce((a, b) => a + b, 0);
-  return <section className="proposal kit-proposal" aria-labelledby="kit-title">
-    <div className="proposal-copy"><p className="eyebrow">PROPOSTA 01 · FAMILIARE</p><h1 id="kit-title">L&apos;energia svizzera<br />cambia forma.</h1><p>Un&apos;evoluzione diretta del kit 4: stesso calore editoriale, ma con più contesto, confronto e precisione.</p></div>
-    <div className="kit-stage"><div className="chart-wrap"><KitDonut row={row} active={active} onActive={setActive} /></div><div className="year-block"><span>ANNO</span><strong>{row.year}</strong></div></div>
-    <div className="time-control"><button className="play-button" onClick={() => setPlaying(!playing)} aria-label={playing ? 'Metti in pausa' : 'Riproduci gli anni'}>{playing ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}</button><input aria-label="Anno" type="range" min="0" max={rows.length - 1} value={index} onChange={(event) => setIndex(Number(event.target.value))} /><div className="range-labels"><span>{rows[0].year}</span><span>{rows.at(-1)?.year}</span></div></div>
-    <div className="source-strip">{SOURCES.map((source, sourceIndex) => { const value = row.values[sourceIndex]; const percent = total ? (value / total) * 100 : 0; return <button key={source.label} className="source-item" style={{ '--source': source.color, '--source-ink': source.ink } as React.CSSProperties} onPointerEnter={() => setActive(sourceIndex)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(sourceIndex)} onBlur={() => setActive(null)}><span className="source-bubble">{percent < 1 && value > 0 ? '<1' : Math.round(percent)}<small>%</small></span><span className="source-name">{source.short}</span><span className="source-value">{value.toFixed(1)} TWh</span></button>; })}</div>
-  </section>;
+function buildStreams(rows: EnergyRow[]) {
+  const width = 1000; const height = 520; const top = 28; const bottom = 478;
+  const totals = rows.map((row) => row.values.reduce((sum, value) => sum + value, 0));
+  const maxTotal = Math.max(...totals) * 1.04;
+  return SOURCES.map((_, sourceIndex) => {
+    const upper: { x: number; y: number }[] = []; const lower: { x: number; y: number }[] = [];
+    rows.forEach((row, rowIndex) => {
+      const x = 24 + (rowIndex / (rows.length - 1)) * (width - 48);
+      const before = row.values.slice(0, sourceIndex).reduce((sum, value) => sum + value, 0);
+      const after = before + row.values[sourceIndex];
+      upper.push({ x, y: top + (before / maxTotal) * (bottom - top) });
+      lower.push({ x, y: top + (after / maxTotal) * (bottom - top) });
+    });
+    return `${smoothPath(upper)} ${smoothPath([...lower].reverse()).replace(/^M/, 'L')} Z`;
+  });
 }
 
-function ArtisticProposal({ rows, index, setIndex, playing, setPlaying }: ViewProps) {
-  const row = rows[index]; const [active, setActive] = useState(8);
-  const maxValue = Math.max(...rows.flatMap((item) => item.values), 1); const total = row.values.reduce((a, b) => a + b, 0);
-  const renewable = [0, 1, 2, 3, 4].reduce((sum, sourceIndex) => sum + row.values[sourceIndex], 0); const renewalShare = total ? (renewable / total) * 100 : 0;
-  return <section className="proposal artistic-proposal" aria-labelledby="art-title">
-    <div className="art-topline"><div><p className="eyebrow">PROPOSTA 02 · SPERIMENTALE</p><h1 id="art-title">Energy<br />playground</h1></div><p className="art-intro">Ogni fonte è un corpo elastico: più energia consuma, più spazio reclama. Trascina il tempo e guarda il sistema respirare.</p></div>
-    <div className="playground" role="img" aria-label={`Campi energetici svizzeri nel ${row.year}`}><div className="year-ghost" aria-hidden="true">{row.year}</div><div className="orbit orbit-a" /><div className="orbit orbit-b" />
-      {SOURCES.map((source, sourceIndex) => { const value = row.values[sourceIndex]; const size = 58 + Math.sqrt(value / maxValue) * 210; const angle = (sourceIndex / SOURCES.length) * Math.PI * 2 - Math.PI / 2; const rx = 34 + (sourceIndex % 3) * 5; const ry = 29 + ((sourceIndex + 1) % 3) * 5; const left = 50 + Math.cos(angle) * rx; const top = 50 + Math.sin(angle) * ry; return <button className={`energy-orb orb-${sourceIndex} ${active === sourceIndex ? 'is-active' : ''}`} key={source.label} style={{ width: size, height: size, left: `${left}%`, top: `${top}%`, '--orb': source.color, '--delay': `${sourceIndex * -0.35}s` } as React.CSSProperties} onClick={() => setActive(sourceIndex)} aria-label={`${source.label}: ${value.toFixed(1)} terawattora`}><span>{source.short}</span><strong>{value.toFixed(1)}</strong><small>TWh</small></button>; })}
-      <div className="art-readout" aria-live="polite"><span>{SOURCES[active].label}</span><strong>{row.values[active].toFixed(1)} <small>TWh</small></strong><Trend rows={rows.slice(0, index + 1)} index={active} /></div>
-    </div>
-    <div className="art-controls"><button className="art-play" onClick={() => setPlaying(!playing)}>{playing ? <Pause size={16} /> : <Play size={16} />} {playing ? 'PAUSA' : 'PLAY'}</button><label><span>VIAGGIA NEL TEMPO</span><strong>{row.year}</strong><input aria-label="Anno" type="range" min="0" max={rows.length - 1} value={index} onChange={(event) => setIndex(Number(event.target.value))} /></label><div className="renewable-meter"><span>RINNOVABILI</span><strong>{renewalShare.toFixed(0)}%</strong><i style={{ width: `${renewalShare}%` }} /></div></div>
-  </section>;
+function FlowVersion({ rows, index, setIndex, playing, setPlaying }: SharedProps) {
+  const row = rows[index]; const [active, setActive] = useState<number | null>(null);
+  const paths = useMemo(() => buildStreams(rows), [rows]);
+  const x = 24 + (index / (rows.length - 1)) * 952;
+  const total = row.values.reduce((sum, value) => sum + value, 0);
+  const electric = row.values[3] + row.values[4];
+  const firstElectric = rows[0].values[3] + rows[0].values[4];
+  const electricDelta = firstElectric ? ((electric / firstElectric) - 1) * 100 : 0;
+
+  return (
+    <section className="flow-view" aria-labelledby="flow-title">
+      <div className="flow-heading">
+        <div><p>PROPOSTA 02 · DATA STORY</p><h1 id="flow-title">LE STRADE<br />DELL&apos;ENERGIA</h1></div>
+        <p>Ventisei anni diventano un&apos;infrastruttura visiva: ogni corsia è un vettore, il suo spessore racconta quanto muove i trasporti.</p>
+      </div>
+
+      <div className="flow-chart">
+        <div className="flow-year" aria-live="polite"><span>ANNO SELEZIONATO</span><strong>{row.year}</strong><small>{formatTJ(total)} TJ TOTALI</small></div>
+        <svg viewBox="0 0 1000 520" preserveAspectRatio="none" role="img" aria-label={`Flusso del consumo energetico dei trasporti dal ${rows[0].year} al ${rows.at(-1)?.year}`}>
+          <defs><filter id="road-shadow"><feDropShadow dx="0" dy="9" stdDeviation="8" floodOpacity=".2" /></filter></defs>
+          {[0, 1, 2, 3, 4].map((grid) => <line key={grid} x1="24" x2="976" y1={28 + grid * 112.5} y2={28 + grid * 112.5} className="flow-grid" />)}
+          <g filter="url(#road-shadow)">{paths.map((path, sourceIndex) => <path key={sourceIndex} d={path} fill={SOURCES[sourceIndex].color} opacity={active === null || active === sourceIndex ? 1 : .12} className="flow-stream" onPointerEnter={() => setActive(sourceIndex)} onPointerLeave={() => setActive(null)} onClick={() => setActive(active === sourceIndex ? null : sourceIndex)} />)}</g>
+          <line x1={x} x2={x} y1="18" y2="492" className="flow-cursor" />
+          <circle cx={x} cy="498" r="8" className="flow-cursor-dot" />
+          <text x="24" y="514" className="flow-axis">{rows[0].year}</text><text x="976" y="514" textAnchor="end" className="flow-axis">{rows.at(-1)?.year}</text>
+        </svg>
+        <input className="flow-scrubber" aria-label="Esplora l'anno" type="range" min="0" max={rows.length - 1} value={index} onChange={(event) => setIndex(Number(event.target.value))} />
+        <div className="flow-legend">{SOURCES.map((source, sourceIndex) => <button key={source.label} className={active === sourceIndex ? 'is-active' : ''} onClick={() => setActive(active === sourceIndex ? null : sourceIndex)}><i style={{ background: source.color }} /><span>{source.label}</span><b>{formatTJ(row.values[sourceIndex])}</b></button>)}</div>
+      </div>
+
+      <aside className="flow-aside">
+        <button className="flow-play" onClick={() => setPlaying(!playing)}>{playing ? <Pause size={15} /> : <Play size={15} />} {playing ? 'FERMA IL TEMPO' : 'METTI IN MOTO'}</button>
+        <div className="flow-stat"><span>ELETTRICITÀ</span><strong>{formatTJ(electric)} <small>TJ</small></strong><p>{electricDelta >= 0 ? '+' : ''}{electricDelta.toFixed(0)}% rispetto al 2000</p></div>
+        <div className="flow-stat"><span>VETTORE PRINCIPALE</span><strong>{SOURCES[row.values.indexOf(Math.max(...row.values))].label}</strong><p>{((Math.max(...row.values) / total) * 100).toFixed(1)}% del totale</p></div>
+        <div className="flow-note"><Route size={18} /><p>Clicca una corsia per seguirla lungo tutta la serie storica.</p></div>
+      </aside>
+    </section>
+  );
 }
 
 export default function Home() {
-  const [rows, setRows] = useState<EnergyRow[]>([]); const [proposal, setProposal] = useState<'kit' | 'art'>('kit'); const [index, setIndex] = useState(0); const [playing, setPlaying] = useState(false);
-  useEffect(() => { fetch('/data/switzerland-energy.csv').then((response) => response.text()).then((text) => { const parsed = parseRows(text); setRows(parsed); setIndex(Math.max(0, parsed.length - 1)); }); }, []);
-  useEffect(() => { if (!playing || !rows.length) return; const timer = window.setInterval(() => setIndex((current) => (current + 1) % rows.length), 650); return () => window.clearInterval(timer); }, [playing, rows.length]);
-  const currentYear = useMemo(() => rows[index]?.year ?? '—', [rows, index]);
-  return <main className={proposal === 'kit' ? 'app kit-theme' : 'app art-theme'}><header className="site-header"><a className="brand" href="#" aria-label="Energy Atlas, torna all'inizio"><span>EA</span><b>ENERGY<br />ATLAS</b></a><nav aria-label="Scegli proposta"><button className={proposal === 'kit' ? 'active' : ''} onClick={() => setProposal('kit')}><span>01</span> Evoluzione kit 4</button><button className={proposal === 'art' ? 'active' : ''} onClick={() => setProposal('art')}><span>02</span> Energy playground <Sparkles size={14} /></button></nav><div className="header-year">SVIZZERA · {currentYear}</div></header>
-    {!rows.length ? <div className="loading">Sto accendendo i dati…</div> : proposal === 'kit' ? <KitProposal rows={rows} index={index} setIndex={setIndex} playing={playing} setPlaying={setPlaying} /> : <ArtisticProposal rows={rows} index={index} setIndex={setIndex} playing={playing} setPlaying={setPlaying} />}
-    <footer><span>DATI: ENERGY INSTITUTE (2024) · OUR WORLD IN DATA</span><span>1965—2023 · CONSUMO DI ENERGIA PRIMARIA</span></footer></main>;
+  const [rows, setRows] = useState<EnergyRow[]>([]); const [mode, setMode] = useState<'kit' | 'flow'>('kit');
+  const [index, setIndex] = useState(0); const [playing, setPlaying] = useState(false);
+  useEffect(() => { fetch('/data/trasporti-vettore-2000-2025.csv').then((response) => response.text()).then((text) => { const parsed = parseRows(text); setRows(parsed); setIndex(parsed.length - 1); }); }, []);
+  useEffect(() => { if (!playing || !rows.length) return; const timer = window.setInterval(() => setIndex((current) => (current + 1) % rows.length), 720); return () => window.clearInterval(timer); }, [playing, rows.length]);
+  return <main className={`app ${mode === 'kit' ? 'kit-theme' : 'flow-theme'}`}>
+    <nav className="mode-switch" aria-label="Scegli l'infografica"><button className={mode === 'kit' ? 'active' : ''} onClick={() => setMode('kit')}><span>01</span> KIT 4</button><button className={mode === 'flow' ? 'active' : ''} onClick={() => setMode('flow')}><span>02</span> ENERGY ROADS <Sparkles size={13} /></button></nav>
+    {!rows.length ? <div className="loading">CARICAMENTO DATI…</div> : mode === 'kit' ? <KitVersion rows={rows} index={index} setIndex={setIndex} playing={playing} setPlaying={setPlaying} /> : <FlowVersion rows={rows} index={index} setIndex={setIndex} playing={playing} setPlaying={setPlaying} />}
+    <footer><span>CONSUMO ENERGETICO DEI TRASPORTI SECONDO IL VETTORE ENERGETICO</span><span>2000—2025 · TERAJOULE</span></footer>
+  </main>;
 }

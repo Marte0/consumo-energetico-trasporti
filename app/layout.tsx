@@ -3,12 +3,12 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://energy-atlas-switzerland.royal-hare-6289.chatgpt.site'),
-  title: 'Energy Atlas — Svizzera 1965–2023',
+  title: 'Energia in movimento — Trasporti 2000–2025',
   description:
-    'Due esplorazioni interattive del mix energetico svizzero, dal 1965 al 2023.',
+    'Due infografiche interattive sul consumo energetico dei trasporti secondo il vettore energetico.',
   openGraph: {
-    title: 'Energy Atlas — Svizzera 1965–2023',
-    description: 'Due modi per esplorare 59 anni di energia svizzera.',
+    title: 'Energia in movimento — Trasporti 2000–2025',
+    description: 'Due modi per esplorare 26 anni di consumi energetici nei trasporti.',
     type: 'website',
   },
 };
