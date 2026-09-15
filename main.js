@@ -11,6 +11,7 @@ let energyDataByYear = {};
 let availableYears = [];
 let minTotal = 0;
 let maxTotal = 1;
+let sliderFrame = null;
 
 window.addEventListener("DOMContentLoaded", () => {
   fetch("./data.csv")
@@ -61,59 +62,124 @@ function drawChart(year) {
   const innerRadius = 90;
   const outerRadius = getOuterRadius(total);
   const filteredValues = values.filter((item) => item.percent >= 1);
-  d3.select("#donut-chart").selectAll("*").remove();
-  const svg = d3.select("#donut-chart").append("svg").attr("width", width).attr("height", height);
-  const group = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+  let svg = d3.select("#donut-chart").select("svg");
+  let group;
+  if (svg.empty()) {
+    svg = d3.select("#donut-chart").append("svg").attr("width", width).attr("height", height);
+    group = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+    group.append("text").attr("text-anchor", "middle").attr("dy", "-0.2em").attr("font-size", "2.7em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-value");
+    group.append("text").attr("text-anchor", "middle").attr("dy", "1.5em").attr("font-size", "2em").attr("font-family", "Satoshi").attr("font-weight", 500).attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-label").text("TJ");
+  } else {
+    group = svg.select("g");
+  }
   const pie = d3.pie().sort(null).value((item) => item.value).padAngle(0.04);
   const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius).cornerRadius(5);
-  const paths = group.selectAll("path").data(pie(filteredValues)).join("path").attr("d", arc).attr("fill", (item) => item.data.color).attr("class", "donut-slice").attr("data-key", (item) => item.data.key).attr("filter", "url(#svg-shadow)").style("transition", "opacity 0.3s");
-  paths.on("mouseenter", function (_event, item) { highlightEnergySource(item.data.key); }).on("mouseleave", function (_event, item) { resetHighlightEnergySource(item.data.key); });
-  group.append("text").attr("text-anchor", "middle").attr("dy", "-0.2em").attr("font-size", "2.7em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-value").text(`${Math.round(total / 1000)}k`);
-  group.append("text").attr("text-anchor", "middle").attr("dy", "1.5em").attr("font-size", "2em").attr("font-family", "Satoshi").attr("font-weight", 500).attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-label").text("TJ");
+  const paths = group.selectAll("path").data(pie(filteredValues), (item) => item.data.key);
+
+  paths
+    .exit()
+    .interrupt()
+    .transition()
+    .duration(280)
+    .ease(d3.easeCubicOut)
+    .attrTween("d", function (item) {
+      const current = this._current || item;
+      const collapsed = { ...item, startAngle: current.endAngle, endAngle: current.endAngle };
+      const interpolate = d3.interpolate(current, collapsed);
+      return (time) => arc(interpolate(time));
+    })
+    .style("opacity", 0)
+    .remove();
+
+  const enteringPaths = paths
+    .enter()
+    .append("path")
+    .attr("class", "donut-slice")
+    .attr("data-key", (item) => item.data.key)
+    .attr("filter", "url(#svg-shadow)")
+    .attr("fill", (item) => item.data.color)
+    .style("opacity", 0)
+    .each(function (item) {
+      this._current = { ...item, endAngle: item.startAngle };
+      this._radius = outerRadius;
+    })
+    .attr("d", function () { return arc(this._current); });
+
+  const mergedPaths = enteringPaths.merge(paths);
+
+  mergedPaths
+    .attr("data-key", (item) => item.data.key)
+    .attr("fill", (item) => item.data.color)
+    .interrupt()
+    .transition()
+    .duration(420)
+    .ease(d3.easeCubicOut)
+    .style("opacity", 1)
+    .attrTween("d", function (item) {
+      const startDatum = this._current || item;
+      const startRadius = this._radius ?? outerRadius;
+      const interpolateDatum = d3.interpolate(startDatum, item);
+      const interpolateRadius = d3.interpolateNumber(startRadius, outerRadius);
+      return (time) => {
+        const frameDatum = interpolateDatum(time);
+        const frameRadius = interpolateRadius(time);
+        this._current = frameDatum;
+        this._radius = frameRadius;
+        return d3.arc().innerRadius(innerRadius).outerRadius(frameRadius).cornerRadius(5)(frameDatum);
+      };
+    });
+
+  mergedPaths.on("mouseenter", function (_event, item) { highlightEnergySource(item.data.key); }).on("mouseleave", function (_event, item) { resetHighlightEnergySource(item.data.key); });
+
+  group.select(".donut-kw-value").interrupt().transition().duration(420).ease(d3.easeCubicOut).tween("text", function () {
+    const start = this._value ?? total;
+    const interpolate = d3.interpolateNumber(start, total);
+    this._value = total;
+    return (time) => { this.textContent = `${Math.round(interpolate(time) / 1000)}k`; };
+  });
 }
 
 function updateEnergyIcons(year) {
   const { values } = getYearData(year);
-  const container = document.getElementById("energy-icons");
-  container.innerHTML = "";
-  values.filter((item) => item.percent >= 1).forEach((source) => {
-    const icon = document.createElement("button");
-    icon.type = "button";
-    icon.className = "energy-icon";
-    icon.dataset.key = source.key;
-    icon.setAttribute("aria-label", `${source.label}: ${Math.round(source.value).toLocaleString("it-CH")} terajoule`);
-    const percentage = document.createElement("div");
-    percentage.className = "energy-percentage cubano-font";
-    percentage.style.color = source.ink;
-    percentage.innerHTML = `<span>${Math.round(source.percent)}</span><span class="percent-symbol">%</span>`;
-    icon.appendChild(percentage);
-    const imagePlaceholder = document.createElement("div");
-    imagePlaceholder.className = "image-placeholder";
-    imagePlaceholder.style.setProperty("--placeholder-color", source.color);
-    imagePlaceholder.style.setProperty("--placeholder-ink", source.ink);
-    imagePlaceholder.textContent = `immagine: ${source.image}`;
-    icon.appendChild(imagePlaceholder);
-    const label = document.createElement("div");
-    label.className = "energy-label";
-    label.textContent = source.label;
-    icon.appendChild(label);
-    const value = document.createElement("div");
-    value.className = "energy-value";
-    value.textContent = `${Math.round(source.value).toLocaleString("it-CH")} TJ`;
-    icon.appendChild(value);
-    icon.addEventListener("mouseenter", () => highlightEnergySource(source.key));
-    icon.addEventListener("mouseleave", () => resetHighlightEnergySource(source.key));
-    icon.addEventListener("focus", () => highlightEnergySource(source.key));
-    icon.addEventListener("blur", () => resetHighlightEnergySource(source.key));
-    container.appendChild(icon);
+  const visibleValues = values.filter((item) => item.percent >= 1);
+  const icons = d3.select("#energy-icons").selectAll("button.energy-icon").data(visibleValues, (source) => source.key);
+
+  icons.exit().interrupt().transition().duration(220).style("opacity", 0).style("transform", "scale(.86)").remove();
+
+  const enteringIcons = icons.enter().append("button").attr("type", "button").attr("class", "energy-icon").style("opacity", 0).style("transform", "translateY(8px)");
+  enteringIcons.append("div").attr("class", "energy-percentage cubano-font").html('<span>0</span><span class="percent-symbol">%</span>');
+  enteringIcons.append("div").attr("class", "image-placeholder");
+  enteringIcons.append("div").attr("class", "energy-label");
+  enteringIcons.append("div").attr("class", "energy-value");
+
+  const mergedIcons = enteringIcons.merge(icons).attr("data-key", (source) => source.key).attr("aria-label", (source) => `${source.label}: ${Math.round(source.value).toLocaleString("it-CH")} terajoule`);
+  mergedIcons.select(".energy-percentage").style("color", (source) => source.ink).select("span:first-child").interrupt().transition().duration(420).ease(d3.easeCubicOut).tween("text", function (source) {
+    const start = this._value ?? source.percent;
+    const interpolate = d3.interpolateNumber(start, source.percent);
+    this._value = source.percent;
+    return (time) => { this.textContent = Math.round(interpolate(time)); };
   });
+  mergedIcons.select(".image-placeholder").style("--placeholder-color", (source) => source.color).style("--placeholder-ink", (source) => source.ink).text((source) => `immagine: ${source.image}`);
+  mergedIcons.select(".energy-label").text((source) => source.label);
+  mergedIcons.select(".energy-value").interrupt().transition().duration(420).ease(d3.easeCubicOut).tween("text", function (source) {
+    const start = this._value ?? source.value;
+    const interpolate = d3.interpolateNumber(start, source.value);
+    this._value = source.value;
+    return (time) => { this.textContent = `${Math.round(interpolate(time)).toLocaleString("it-CH")} TJ`; };
+  });
+  mergedIcons.interrupt().transition().duration(320).ease(d3.easeCubicOut).style("opacity", 1).style("transform", "translateY(0)");
+  mergedIcons.on("mouseenter", (_event, source) => highlightEnergySource(source.key)).on("mouseleave", (_event, source) => resetHighlightEnergySource(source.key)).on("focus", (_event, source) => highlightEnergySource(source.key)).on("blur", (_event, source) => resetHighlightEnergySource(source.key));
 }
 
 document.getElementById("year-slider").addEventListener("input", function () {
   const year = +this.value;
   document.getElementById("year-label").textContent = year;
-  drawChart(year);
-  updateEnergyIcons(year);
+  if (sliderFrame) cancelAnimationFrame(sliderFrame);
+  sliderFrame = requestAnimationFrame(() => {
+    drawChart(year);
+    updateEnergyIcons(year);
+    sliderFrame = null;
+  });
 });
 
 function highlightEnergySource(key) {
