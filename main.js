@@ -141,12 +141,12 @@ function drawChart(year) {
 
 function updateEnergyIcons(year) {
   const { values } = getYearData(year);
-  const visibleValues = values.filter((item) => item.percent >= 1);
+  const visibleValues = values;
   const icons = d3.select("#energy-icons").selectAll("button.energy-icon").data(visibleValues, (source) => source.key);
 
-  icons.exit().interrupt().transition().duration(220).style("opacity", 0).style("transform", "scale(.86)").remove();
+  icons.exit().remove();
 
-  const enteringIcons = icons.enter().append("button").attr("type", "button").attr("class", "energy-icon").style("opacity", 0).style("transform", "translateY(8px)");
+  const enteringIcons = icons.enter().append("button").attr("type", "button").attr("class", "energy-icon");
   enteringIcons.append("div").attr("class", "energy-percentage cubano-font").html('<span>0</span><span class="percent-symbol">%</span>');
   enteringIcons.append("div").attr("class", "image-placeholder");
   enteringIcons.append("div").attr("class", "energy-label");
@@ -157,7 +157,10 @@ function updateEnergyIcons(year) {
     const start = this._value ?? source.percent;
     const interpolate = d3.interpolateNumber(start, source.percent);
     this._value = source.percent;
-    return (time) => { this.textContent = Math.round(interpolate(time)); };
+    return (time) => {
+      const current = interpolate(time);
+      this.textContent = time === 1 && source.value > 0 && source.percent < 1 ? "<1" : Math.round(current);
+    };
   });
   mergedIcons.select(".image-placeholder").style("--placeholder-color", (source) => source.color).style("--placeholder-ink", (source) => source.ink).text((source) => `immagine: ${source.image}`);
   mergedIcons.select(".energy-label").text((source) => source.label);
@@ -167,7 +170,6 @@ function updateEnergyIcons(year) {
     this._value = source.value;
     return (time) => { this.textContent = `${Math.round(interpolate(time)).toLocaleString("it-CH")} TJ`; };
   });
-  mergedIcons.interrupt().transition().duration(320).ease(d3.easeCubicOut).style("opacity", 1).style("transform", "translateY(0)");
   mergedIcons.on("mouseenter", (_event, source) => highlightEnergySource(source.key)).on("mouseleave", (_event, source) => resetHighlightEnergySource(source.key)).on("focus", (_event, source) => highlightEnergySource(source.key)).on("blur", (_event, source) => resetHighlightEnergySource(source.key));
 }
 
