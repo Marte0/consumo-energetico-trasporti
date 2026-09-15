@@ -1,10 +1,10 @@
 const ENERGY_SOURCES = [
-  { key: "benzina", label: "BENZINA", csv: "benzina (TJ)", image: "pompa di benzina", color: "#FF9233", ink: "#802D00" },
-  { key: "diesel", label: "DIESEL", csv: "diesel (TJ)", image: "tanica di diesel", color: "#804600", ink: "#FFD12E" },
-  { key: "aviazione", label: "AVIAZIONE", csv: "carburanti per l’aviazione (TJ)", image: "aereo in volo", color: "#ACB5F8", ink: "#142182" },
-  { key: "elettrico-privato", label: "ELETTRICO PRIVATO", csv: "elettricità: traffico stradale privato¹ (TJ)", image: "auto elettrica", color: "#FFD12E", ink: "#804600" },
-  { key: "elettrico-altri", label: "ELETTRICO PUBBLICO", csv: "elettricità: altri trasporti (ferroviario, pubblico su strada², non stradale³) (TJ)", image: "treno elettrico", color: "#95D9E5", ink: "#005573" },
-  { key: "gas-altro", label: "GAS + ALTRO", csv: "gas e altre fonti energetiche (TJ)", image: "serbatoio di gas", color: "#E5B2FF", ink: "#631F66" },
+  { key: "benzina", label: "BENZINA", csv: "benzina (TJ)", image: "assets/benzina.png", imageAlt: "Pompa di benzina", color: "#B9DA49", ink: "#006146" },
+  { key: "diesel", label: "DIESEL", csv: "diesel (TJ)", image: "assets/diesel.png", imageAlt: "Pompa di gasolio", color: "#FFD12E", ink: "#804600" },
+  { key: "aviazione", label: "AVIAZIONE", csv: "carburanti per l’aviazione (TJ)", image: "assets/aviazione.png", imageAlt: "Aereo in volo", color: "#95D9E5", ink: "#005573" },
+  { key: "elettrico-privato", label: "ELETTRICO PRIVATO", csv: "elettricità: traffico stradale privato¹ (TJ)", image: "assets/elettrico-privato.png", imageAlt: "Presa per la ricarica elettrica domestica", color: "#FFB3D2", ink: "#8C0040" },
+  { key: "elettrico-altri", label: "ELETTRICO PUBBLICO", csv: "elettricità: altri trasporti (ferroviario, pubblico su strada², non stradale³) (TJ)", image: "assets/elettrico-pubblico.png", imageAlt: "Treno per il trasporto pubblico", color: "#ED5853", ink: "#800006" },
+  { key: "gas-altro", label: "GAS + ALTRO", csv: "gas e altre fonti energetiche (TJ)", image: "assets/gas.png", imageAlt: "Bombola del gas", color: "#ACB5F8", ink: "#33489E" },
 ];
 
 let energyDataByYear = {};
@@ -148,7 +148,7 @@ function updateEnergyIcons(year) {
 
   const enteringIcons = icons.enter().append("button").attr("type", "button").attr("class", "energy-icon");
   enteringIcons.append("div").attr("class", "energy-percentage cubano-font").html('<span>0</span><span class="percent-symbol">%</span>');
-  enteringIcons.append("div").attr("class", "image-placeholder");
+  enteringIcons.append("img").attr("class", "energy-image");
   enteringIcons.append("div").attr("class", "energy-label");
   enteringIcons.append("div").attr("class", "energy-value");
 
@@ -162,8 +162,8 @@ function updateEnergyIcons(year) {
       this.textContent = time === 1 && source.value > 0 && source.percent < 1 ? "<1" : Math.round(current);
     };
   });
-  mergedIcons.select(".image-placeholder").style("--placeholder-color", (source) => source.color).style("--placeholder-ink", (source) => source.ink).text((source) => `immagine: ${source.image}`);
-  mergedIcons.select(".energy-label").text((source) => source.label);
+  mergedIcons.select(".energy-image").attr("src", (source) => source.image).attr("alt", (source) => source.imageAlt);
+  mergedIcons.select(".energy-label").style("color", (source) => source.ink).text((source) => source.label);
   mergedIcons.select(".energy-value").interrupt().transition().duration(420).ease(d3.easeCubicOut).tween("text", function (source) {
     const start = this._value ?? source.value;
     const interpolate = d3.interpolateNumber(start, source.value);

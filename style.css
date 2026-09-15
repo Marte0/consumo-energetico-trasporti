@@ -12,7 +12,7 @@ body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-se
 #year-label { margin-top: 5px; font-size: 1.2em; color: #1d1d1b; }
 #energy-icons { display: flex; flex-direction: row; justify-content: center; gap: 30px; margin-top: 30px; margin-bottom: 30px; }
 .energy-icon { display: flex; flex-direction: column; align-items: center; position: relative; transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; border: 0; background: transparent; padding: 0; font: inherit; cursor: pointer; }
-.image-placeholder { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 34px 8px 8px; text-align: center; color: var(--placeholder-ink); background: var(--placeholder-color); font-family: "Satoshi", Arial, sans-serif; font-size: 6px; font-weight: 700; line-height: 1.15; text-transform: uppercase; }
+.energy-image { width: 80px; height: 80px; border-radius: 50%; display: block; object-fit: cover; }
 .energy-percentage { position: absolute; top: 10%; background: none; color: #8a5a13; font-family: "Cubano", "Satoshi", Arial, sans-serif; font-size: var(--energy-percentage-size, 2em); font-weight: bold; border: none; padding: 0; line-height: 1; z-index: 2; }
 .energy-percentage .percent-symbol { font-size: 0.5em; }
 .energy-label { margin-top: 10px; color: #8a5a13; font-weight: bold; font-size: 0.9em; text-align: center; font-family: "Cubano", "Satoshi", Arial, sans-serif; max-width: 130px; line-height: 1.05; }
