@@ -184,16 +184,35 @@ document.getElementById("year-slider").addEventListener("input", function () {
   });
 });
 
+function transitionSliceRadius(selection, targetRadius, duration = 200) {
+  return selection
+    .interrupt()
+    .transition()
+    .duration(duration)
+    .ease(d3.easeCubicOut)
+    .attrTween("d", function (item) {
+      const startRadius = this._radius ?? targetRadius;
+      const interpolateRadius = d3.interpolateNumber(startRadius, targetRadius);
+      const currentItem = this._current || item;
+      return (time) => {
+        const radius = interpolateRadius(time);
+        this._radius = radius;
+        return d3.arc().innerRadius(90).outerRadius(radius).cornerRadius(5)(currentItem);
+      };
+    });
+}
+
 function highlightEnergySource(key) {
   const year = +document.getElementById("year-slider").value;
   const { total } = getYearData(year);
   const baseRadius = getOuterRadius(total);
-  d3.selectAll("#donut-chart path").each(function () {
+  const paths = d3.selectAll("#donut-chart path");
+  paths.each(function () {
     const element = d3.select(this);
-    element.interrupt().attr("d", d3.arc().innerRadius(90).outerRadius(baseRadius).cornerRadius(5));
     element.style("opacity", element.attr("data-key") === key ? 1 : 0.5);
   });
-  d3.selectAll(`#donut-chart path[data-key='${key}']`).transition().duration(200).attr("d", d3.arc().innerRadius(90).outerRadius(baseRadius + 18).cornerRadius(5)).style("opacity", 1);
+  transitionSliceRadius(paths, baseRadius, 160);
+  transitionSliceRadius(paths.filter((item) => item.data.key === key), baseRadius + 18, 200).style("opacity", 1);
   document.querySelectorAll(".energy-icon").forEach((element) => {
     const active = element.dataset.key === key;
     element.style.opacity = active ? "1" : "0.5";
@@ -201,11 +220,10 @@ function highlightEnergySource(key) {
   });
 }
 
-function resetHighlightEnergySource(key) {
+function resetHighlightEnergySource() {
   const year = +document.getElementById("year-slider").value;
   const { total } = getYearData(year);
   const baseRadius = getOuterRadius(total);
-  if (key) d3.selectAll(`#donut-chart path[data-key='${key}']`).transition().duration(200).attr("d", d3.arc().innerRadius(90).outerRadius(baseRadius).cornerRadius(5)).style("opacity", 1);
   document.querySelectorAll(".energy-icon").forEach((element) => { element.style.opacity = "1"; element.style.transform = "scale(1)"; });
-  d3.selectAll("#donut-chart path").transition().duration(200).style("opacity", 1);
+  transitionSliceRadius(d3.selectAll("#donut-chart path"), baseRadius, 200).style("opacity", 1);
 }
