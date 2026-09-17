@@ -67,7 +67,9 @@ function drawChart(year) {
   if (svg.empty()) {
     svg = d3.select("#donut-chart").append("svg").attr("width", width).attr("height", height);
     group = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
-    group.append("text").attr("text-anchor", "middle").attr("dy", "-0.2em").attr("font-size", "2.7em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-value");
+    const totalText = group.append("text").attr("text-anchor", "middle").attr("dy", "-0.2em").attr("font-size", "2.7em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-value");
+    totalText.append("tspan").attr("class", "donut-kw-value-main");
+    totalText.append("tspan").attr("class", "donut-kw-value-zeros").attr("font-size", "0.52em").attr("dx", "1").text("000");
     group.append("text").attr("text-anchor", "middle").attr("dy", "1.5em").attr("font-size", "2em").attr("font-family", "Satoshi").attr("font-weight", 500).attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-label").text("TJ");
   } else {
     group = svg.select("g");
@@ -135,7 +137,8 @@ function drawChart(year) {
     const start = this._value ?? total;
     const interpolate = d3.interpolateNumber(start, total);
     this._value = total;
-    return (time) => { this.textContent = `${Math.round(interpolate(time) / 1000)}k`; };
+    const mainValue = d3.select(this).select(".donut-kw-value-main");
+    return (time) => { mainValue.text(Math.round(interpolate(time) / 1000)); };
   });
 }
 

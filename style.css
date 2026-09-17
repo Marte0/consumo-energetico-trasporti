@@ -22,6 +22,7 @@ body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-se
 .energy-label { margin-top: 10px; color: #8a5a13; font-weight: bold; font-size: 0.9em; text-align: center; font-family: "Cubano", "Satoshi", Arial, sans-serif; max-width: 130px; line-height: 1.05; }
 .energy-value { margin-top: 5px; color: #1d1d1b; font-size: 0.68em; font-weight: 700; }
 .donut-kw-value { font-family: "Satoshi", Arial, sans-serif; font-weight: 700; }
+.donut-kw-value-zeros { font-weight: 700; }
 .donut-kw-label { font-family: "Satoshi", Arial, sans-serif; font-weight: 500; }
 .cubano-font { font-family: "Cubano", Arial, sans-serif; font-weight: normal; }
 .donut-slice { cursor: pointer; }
