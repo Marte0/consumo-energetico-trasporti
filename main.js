@@ -67,9 +67,9 @@ function drawChart(year) {
   if (svg.empty()) {
     svg = d3.select("#donut-chart").append("svg").attr("width", width).attr("height", height);
     group = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
-    const totalText = group.append("text").attr("text-anchor", "middle").attr("dy", "-0.2em").attr("font-size", "2.7em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-value");
+    const totalText = group.append("text").attr("text-anchor", "middle").attr("y", 4).attr("font-size", "2.7em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("class", "donut-kw-value");
     totalText.append("tspan").attr("class", "donut-kw-value-main");
-    totalText.append("tspan").attr("class", "donut-kw-value-zeros").attr("font-size", "0.52em").attr("dx", "1").attr("dy", "0").attr("alignment-baseline", "baseline").attr("dominant-baseline", "alphabetic").text("000");
+    totalText.append("tspan").attr("class", "donut-kw-value-zeros").attr("font-size", "0.52em").attr("dx", "1").attr("dy", "0").text("000");
     group.append("text").attr("text-anchor", "middle").attr("dy", "1.5em").attr("font-size", "2em").attr("font-family", "Satoshi").attr("font-weight", 500).attr("fill", "#2d1a00").attr("dominant-baseline", "middle").attr("class", "donut-kw-label").text("TJ");
   } else {
     group = svg.select("g");
