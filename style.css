@@ -38,11 +38,20 @@ body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-se
   #energy-icons { flex-wrap: wrap; gap: 24px; max-width: 650px; }
 }
 @media (max-width: 520px) {
-  .page-header { flex-direction: column; gap: 14px; padding: 16px 14px 0; }
-  .page-header h1 { width: 100%; font-size: 1.45rem; }
-  .page-header a { max-width: 250px; text-align: left; }
-  #container { padding-top: 10px; }
-  #energy-icons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 12px; }
+  .page-header { flex-direction: column; gap: 8px; padding: 12px 12px 0; }
+  .page-header h1 { width: 100%; font-size: 1.05rem; line-height: 1; }
+  .page-header a { max-width: 250px; font-size: 0.62rem; line-height: 1.1; text-align: left; }
+  #container { padding: 6px 4px 20px; }
+  #donut-chart { display: flex; width: 100%; justify-content: center; margin: 0; }
+  #donut-chart svg { width: min(450px, 98vw); max-width: 98vw; height: auto; }
+  #year-slider-container { width: 94vw; margin-top: 2px; }
+  #year-slider { height: 44px; margin: 0; appearance: none; -webkit-appearance: none; background: transparent; cursor: pointer; }
+  #year-slider::-webkit-slider-runnable-track { height: 12px; border-radius: 999px; background: #d7c5a6; }
+  #year-slider::-webkit-slider-thumb { width: 34px; height: 34px; margin-top: -11px; border: 3px solid #f8efe0; border-radius: 50%; appearance: none; -webkit-appearance: none; background: #804600; box-shadow: 0 2px 6px rgba(29, 29, 27, 0.22); }
+  #year-slider::-moz-range-track { height: 12px; border-radius: 999px; background: #d7c5a6; }
+  #year-slider::-moz-range-progress { height: 12px; border-radius: 999px; background: #804600; }
+  #year-slider::-moz-range-thumb { width: 28px; height: 28px; border: 3px solid #f8efe0; border-radius: 50%; background: #804600; box-shadow: 0 2px 6px rgba(29, 29, 27, 0.22); }
+  #energy-icons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(360px, 92vw); max-width: 360px; gap: 24px 16px; margin-top: 20px; }
   .energy-icon { width: 100%; }
   .energy-label { font-size: 0.72em; max-width: 100px; }
 }
