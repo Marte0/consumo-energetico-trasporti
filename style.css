@@ -38,20 +38,25 @@ body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-se
   #energy-icons { flex-wrap: wrap; gap: 24px; max-width: 650px; }
 }
 @media (max-width: 520px) {
-  .page-header { flex-direction: column; gap: 8px; padding: 12px 12px 0; }
+  body { height: 100dvh; min-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  .page-header { flex: 0 0 auto; flex-direction: column; gap: 6px; padding: 10px 12px 0; }
   .page-header h1 { width: 100%; font-size: 1.05rem; line-height: 1; }
   .page-header a { max-width: 250px; font-size: 0.62rem; line-height: 1.1; text-align: left; }
-  #container { padding: 6px 4px 20px; }
-  #donut-chart { display: flex; width: 100%; justify-content: center; margin: 0; }
-  #donut-chart svg { width: min(450px, 98vw); max-width: 98vw; height: auto; }
-  #year-slider-container { width: 94vw; margin-top: 2px; }
+  #container { flex: 1 1 auto; height: auto; min-height: 0; justify-content: flex-start; overflow: hidden; padding: 4px 4px 6px; }
+  #donut-chart { display: flex; flex: 0 0 auto; width: 100%; justify-content: center; margin: 0 0 8px; }
+  #donut-chart svg { width: min(300px, 70vw, 31dvh); max-width: 70vw; height: auto; }
+  #year-slider-container { flex: 0 0 auto; width: 90vw; margin: 0; }
   #year-slider { height: 44px; margin: 0; appearance: none; -webkit-appearance: none; background: transparent; cursor: pointer; }
   #year-slider::-webkit-slider-runnable-track { height: 12px; border-radius: 999px; background: #d7c5a6; }
   #year-slider::-webkit-slider-thumb { width: 34px; height: 34px; margin-top: -11px; border: 3px solid #f8efe0; border-radius: 50%; appearance: none; -webkit-appearance: none; background: #804600; box-shadow: 0 2px 6px rgba(29, 29, 27, 0.22); }
   #year-slider::-moz-range-track { height: 12px; border-radius: 999px; background: #d7c5a6; }
   #year-slider::-moz-range-progress { height: 12px; border-radius: 999px; background: #804600; }
   #year-slider::-moz-range-thumb { width: 28px; height: 28px; border: 3px solid #f8efe0; border-radius: 50%; background: #804600; box-shadow: 0 2px 6px rgba(29, 29, 27, 0.22); }
-  #energy-icons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(360px, 92vw); max-width: 360px; gap: 24px 16px; margin-top: 20px; }
-  .energy-icon { width: 100%; }
-  .energy-label { font-size: 0.72em; max-width: 100px; }
+  #year-label { margin-top: -2px; font-size: 1em; }
+  #energy-icons { display: grid; flex: 1 1 auto; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: space-evenly; width: min(340px, 90vw); max-width: 340px; min-height: 0; gap: min(10px, 1.2dvh) 16px; margin: 4px 0 0; }
+  .energy-icon { width: 100%; min-height: 0; }
+  .energy-image { width: clamp(46px, 7.2dvh, 62px); height: clamp(46px, 7.2dvh, 62px); }
+  .energy-percentage { font-size: clamp(1.15rem, 3dvh, 1.55rem); }
+  .energy-label { max-width: 110px; margin-top: 4px; font-size: 0.66rem; }
+  .energy-value { margin-top: 2px; font-size: 0.6rem; }
 }
