@@ -42,10 +42,10 @@ body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-se
   .page-header { flex: 0 0 auto; flex-direction: column; gap: 6px; padding: 10px 12px 0; }
   .page-header h1 { width: 100%; font-size: 1.05rem; line-height: 1; }
   .page-header a { max-width: 250px; font-size: 0.62rem; line-height: 1.1; text-align: left; }
-  #container { flex: 1 1 auto; height: auto; min-height: 0; justify-content: flex-start; overflow: hidden; padding: 4px 4px 6px; }
-  #donut-chart { display: flex; flex: 0 0 auto; width: 100%; justify-content: center; margin: 0 0 10px; }
-  #donut-chart svg { width: min(250px, 60vw, 26dvh); height: min(250px, 60vw, 26dvh); }
-  #year-slider-container { flex: 0 0 auto; width: 90vw; margin: 0; }
+  #container { display: grid; flex: 1 1 auto; grid-template-rows: auto auto auto; justify-items: center; align-content: space-evenly; height: auto; min-height: 0; overflow: hidden; padding: 4px 4px 6px; }
+  #donut-chart { display: flex; width: 100%; justify-content: center; margin: 0; }
+  #donut-chart svg { width: min(285px, 68vw, 32dvh); height: min(285px, 68vw, 32dvh); }
+  #year-slider-container { width: 90vw; margin: 0; }
   #year-slider { height: 44px; margin: 0; appearance: none; -webkit-appearance: none; background: transparent; cursor: pointer; }
   #year-slider::-webkit-slider-runnable-track { height: 12px; border-radius: 999px; background: #d7c5a6; }
   #year-slider::-webkit-slider-thumb { width: 34px; height: 34px; margin-top: -11px; border: 3px solid #f8efe0; border-radius: 50%; appearance: none; -webkit-appearance: none; background: #804600; box-shadow: 0 2px 6px rgba(29, 29, 27, 0.22); }
@@ -53,7 +53,7 @@ body { height: 100%; background: #f8efe0; font-family: "Satoshi", Arial, sans-se
   #year-slider::-moz-range-progress { height: 12px; border-radius: 999px; background: #804600; }
   #year-slider::-moz-range-thumb { width: 28px; height: 28px; border: 3px solid #f8efe0; border-radius: 50%; background: #804600; box-shadow: 0 2px 6px rgba(29, 29, 27, 0.22); }
   #year-label { margin-top: -2px; font-size: 1em; }
-  #energy-icons { display: grid; flex: 1 1 auto; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: center; width: min(390px, 96vw); max-width: 390px; min-height: 0; gap: min(8px, 1dvh) 4px; margin: 2px 0 0; }
+  #energy-icons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(390px, 96vw); max-width: 390px; min-height: 0; gap: min(8px, 1dvh) 4px; margin: 0; }
   .energy-icon { width: 100%; min-height: 0; }
   .energy-image { width: clamp(44px, 6.5dvh, 58px); height: clamp(44px, 6.5dvh, 58px); }
   .energy-percentage { font-size: clamp(1.1rem, 2.7dvh, 1.45rem); }
