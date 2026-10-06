@@ -65,7 +65,7 @@ function drawChart(year) {
   let svg = d3.select("#donut-chart").select("svg");
   let group;
   if (svg.empty()) {
-    svg = d3.select("#donut-chart").append("svg").attr("width", width).attr("height", height);
+    svg = d3.select("#donut-chart").append("svg").attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMidYMid meet");
     group = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
     const totalText = group.append("text").attr("text-anchor", "middle").attr("y", 4).attr("font-size", "2.15em").attr("font-weight", "bold").attr("font-family", "Satoshi").attr("fill", "#2d1a00").attr("class", "donut-kw-value");
     totalText.append("tspan").attr("class", "donut-kw-value-main");
